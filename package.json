@@ -1,0 +1,11 @@
+{
+  "name": "shellshare",
+  "version": "0.0.1",
+  "description": "Share your shell with people",
+  "main": "index.js",
+  "scripts": {
+    "run": "node index.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
