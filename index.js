@@ -56,6 +56,15 @@ function handleUpload(req, res) {
             client.write(chunk);
         }
     });
+    req.on("close", () => {
+        const session = sessions.get(sessionId);
+        for (const client of session.values()) {
+            client.write('The host closed the session. Thank you for using ShellShare!\n\r');
+            client.end();
+        }
+        sessions.delete(sessionId);
+        console.log(`Current number of sessions: ${sessions.size}`);
+    });
 }
 
 function handleStream(req, res) {
@@ -71,15 +80,10 @@ function handleStream(req, res) {
     });
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
-
-    ((currentId) => {
-        req.on("close", () => {
-            sessions.get(sessionId).delete(currentId);
-        });
-    })(sseClientId);
+    res.write('Welcome to ShellShare!\n\r');
     sseClientId++;
 }
 
 server.listen(process.env.PORT || 3000, () => {
-    console.log(`ShellShare server running on port: ${process.env.PORT || 3000}`);
+    console.log(`ShellShare server running on ${rootUrl}`);
 });
