@@ -1,4 +1,8 @@
-# Shellshare
+# ShellShare
 
-In order to share your shell, use `script -F | tee /dev/tty | curl --no-progress-meter -T - localhost:3000`
-https://stackoverflow.com/questions/31504531/is-it-possible-to-upload-a-file-with-curl-from-a-pipe
+You can set the following environment variables
+
+- HOST: Hostname of the server, defaults to 'localhost'
+- PORT: Port on which to listen, defaults to '3000'
+- NOPORT: set to anything if you don't want to show the listening port in the URLs
+- PROTOCOL: either 'http' or 'https', defaults to 'https'

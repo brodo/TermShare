@@ -1,9 +1,10 @@
 const http = require('http');
 const fs = require('fs');
 const template = fs.readFileSync('index.html', 'utf-8');
-const url = `${process.env.PROTOCOL || 'http'}://${process.env.HOST || 'localhost'}:${process.env.PORT || ''}`;
-const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${url}`;
-const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${url}`
+const port = process.env.NOPORT ? '' : `:${process.env.PORT || ''}`
+const rootUrl = `${process.env.PROTOCOL || 'https'}://${process.env.HOST || 'localhost'}${port}`;
+const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
+const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
 const html = template.replaceAll('$$LINUX_COMMAND$$', linuxCommand).replaceAll('$$MAC_COMMAND$$', macCommand);
 const sessions = new Map();
 let sseClientId = 0;
@@ -43,7 +44,7 @@ const server = http.createServer((req, res) => {
 function handleUpload(req, res) {
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
-    const url = `${process.env.PROTOCOL || 'http'}://${process.env.HOST || 'localhost'}:${process.env.PORT || ''}/${sessionId}`
+    const url = `${rootUrl}/${sessionId}`
     const msg = 'Welcome to ShellShare!\n\r' +
         `Watchers need to run 'curl ${url}'\n\r` +
         `To end the session, type 'exit' followed by CTRL+C.\n\r` +
@@ -82,4 +83,3 @@ function handleStream(req, res) {
 server.listen(process.env.PORT || 3000, () => {
     console.log(`ShellShare server running on port: ${process.env.PORT || 3000}`);
 });
-
