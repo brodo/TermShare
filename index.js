@@ -5,6 +5,16 @@ const port = process.env.NOPORT ? '' : `:${process.env.PORT || 3000}`
 const rootUrl = `${process.env.PROTOCOL || 'https'}://${process.env.HOST || 'localhost'}${port}`;
 const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
 const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
+const sseHeader = {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-store',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no', // needed for nginx
+
+    // enabling CORS
+    'Access-Control-Allow-Origin': "*",
+    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Last-Event-ID'
+};
 
 if (typeof String.prototype.replaceAll !== 'function') {
     function escapeRegExp(str) {
@@ -53,6 +63,7 @@ const server = http.createServer((req, res) => {
 });
 
 function handleUpload(req, res) {
+    res.writeHead(200, sseHeader);
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
     const url = `${rootUrl}/${sessionId}`
@@ -79,16 +90,7 @@ function handleUpload(req, res) {
 }
 
 function handleStream(req, res) {
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-store',
-        'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no', // needed for nginx
-
-        // enabling CORS
-        'Access-Control-Allow-Origin': "*",
-        'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Last-Event-ID'
-    });
+    res.writeHead(200, sseHeader);
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
     res.write('Welcome to ShellShare!\n\r');
