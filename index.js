@@ -5,6 +5,17 @@ const port = process.env.NOPORT ? '' : `:${process.env.PORT || ''}`
 const rootUrl = `${process.env.PROTOCOL || 'https'}://${process.env.HOST || 'localhost'}${port}`;
 const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
 const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
+
+if (typeof String.prototype.replaceAll !== 'function') {
+    function escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+    }
+    String.prototype.replaceAll = function (search, replacement) {
+        let target = this;
+        return target.replace(new RegExp(escapeRegExp(search), 'g'), replacement);
+    };
+}
+
 const html = template.replaceAll('$$LINUX_COMMAND$$', linuxCommand).replaceAll('$$MAC_COMMAND$$', macCommand);
 const sessions = new Map();
 let sseClientId = 0;
