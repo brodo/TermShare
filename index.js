@@ -63,6 +63,7 @@ const server = http.createServer((req, res) => {
 });
 
 function handleUpload(req, res) {
+    console.log('New sharer');
     res.writeHead(200, sseHeader);
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
@@ -72,6 +73,7 @@ function handleUpload(req, res) {
         `To end the session, type 'exit' followed by CTRL+C.\n\r` +
         `The Session will be recorded in the file 'typescript' in the current directory.\n\r`
     res.write(msg);
+    console.log('Welcome message written');
     req.on('data', function (chunk) {
         const clients = sessions.get(sessionId);
         for (const client of clients.values()) {
