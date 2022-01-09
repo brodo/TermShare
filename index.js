@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const template = fs.readFileSync('index.html', 'utf-8');
-const port = process.env.NOPORT ? '' : `:${process.env.PORT || ''}`
+const port = process.env.NOPORT ? '' : `:${process.env.PORT || 3000}`
 const rootUrl = `${process.env.PROTOCOL || 'https'}://${process.env.HOST || 'localhost'}${port}`;
 const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
 const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
         res.end();
         return;
     }
-    if (req.headers['transfer-encoding'] === 'chunked') {
+    if (req.method === 'PUT') {
         handleUpload(req, res);
         return;
     }
