@@ -1,25 +1,21 @@
-const http = require('http');
+const http2 = require('http2')
 const fs = require('fs');
+
+const cert = fs.readFileSync('cert.pem');
+const key = fs.readFileSync('key.pem');
+
 const template = fs.readFileSync('index.html', 'utf-8');
 const port = process.env.NOPORT ? '' : `:${process.env.PORT || 3000}`
-const rootUrl = `${process.env.PROTOCOL || 'https'}://${process.env.HOST || 'localhost'}${port}`;
+const rootUrl = `https://${process.env.HOST || 'localhost'}${port}`;
 const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
 const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
-const sseHeader = {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-store',
-    'Connection': 'keep-alive',
-    'X-Accel-Buffering': 'no', // needed for nginx
 
-    // enabling CORS
-    'Access-Control-Allow-Origin': "*",
-    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Last-Event-ID'
-};
 
 if (typeof String.prototype.replaceAll !== 'function') {
     function escapeRegExp(str) {
         return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
     }
+
     String.prototype.replaceAll = function (search, replacement) {
         let target = this;
         return target.replace(new RegExp(escapeRegExp(search), 'g'), replacement);
@@ -29,7 +25,7 @@ if (typeof String.prototype.replaceAll !== 'function') {
 const html = template.replaceAll('$$LINUX_COMMAND$$', linuxCommand).replaceAll('$$MAC_COMMAND$$', macCommand);
 const sessions = new Map();
 let sseClientId = 0;
-const server = http.createServer((req, res) => {
+const server = http2.createSecureServer({key, cert}, (req, res) => {
     if (req.method === 'OPTIONS') {
         res.writeHead(204, headers);
         res.end();
@@ -48,7 +44,7 @@ const server = http.createServer((req, res) => {
 
     const deliverHTML = req.headers['accept'] && req.headers['accept'].split(',')[0] === 'text/html';
     res.statusCode = 200;
-    if(deliverHTML){
+    if (deliverHTML) {
         res.setHeader('Content-Type', 'text/html');
         res.write(html);
     } else {
@@ -64,7 +60,6 @@ const server = http.createServer((req, res) => {
 
 function handleUpload(req, res) {
     console.log('New sharer');
-    res.writeHead(200, sseHeader);
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
     console.log(`New session: ${sessionId}`);
@@ -94,7 +89,6 @@ function handleUpload(req, res) {
 }
 
 function handleStream(req, res) {
-    res.writeHead(200, sseHeader);
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
     res.write('Welcome to TermShare!\n\r');

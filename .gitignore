@@ -1,1 +1,4 @@
 .idea/
+cert.pem
+key.pem
+typescript

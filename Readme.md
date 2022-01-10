@@ -1,4 +1,4 @@
-# ShellShare
+# TermShare
 
 You can set the following environment variables
 
