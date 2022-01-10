@@ -71,6 +71,7 @@ function handleUpload(req, res) {
         `The Session will be recorded in the file 'typescript' in the current directory.\n\r`
     res.write(msg);
     console.log('Welcome message written.');
+    req.on('')
     req.on('data', function (chunk) {
         const clients = sessions.get(sessionId);
         for (const client of clients.values()) {
@@ -87,6 +88,11 @@ function handleUpload(req, res) {
         console.log(`Current number of sessions: ${sessions.size}`);
     });
 }
+
+server.on('session', (session) => {
+    session.setTimeout(1000 * 3600);
+});
+
 
 function handleStream(req, res) {
     const sessionId = req.url.substr(1);
