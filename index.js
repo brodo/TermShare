@@ -72,6 +72,7 @@ function handleUpload(req, res) {
     const msg = 'Welcome to TermShare!\n\r' +
         `Watchers need to run 'curl ${url}'\n\r` +
         `To end the session, type 'exit' followed by CTRL+C.\n\r` +
+        "Please don't type in any passwords!\n\r" +
         `The Session will be recorded in the file 'typescript' in the current directory.\n\r`
     res.write(msg);
     console.log('Welcome message written.');
