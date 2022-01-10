@@ -59,6 +59,7 @@ const server = http2.createSecureServer({key, cert}, (req, res) => {
 });
 
 function handleUpload(req, res) {
+    req.setTimeout(1000 * 3600);
     console.log('New sharer');
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
@@ -89,12 +90,10 @@ function handleUpload(req, res) {
     });
 }
 
-server.on('session', (session) => {
-    session.setTimeout(1000 * 3600);
-});
 
 
 function handleStream(req, res) {
+    req.setTimeout(1000 * 3600);
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
     res.write('Welcome to TermShare!\n\r');
