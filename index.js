@@ -59,8 +59,11 @@ const server = http2.createSecureServer({key, cert}, (req, res) => {
 });
 
 function handleUpload(req, res) {
-    req.setTimeout(1000 * 3600);
     console.log('New sharer');
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache'
+    })
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
     console.log(`New session: ${sessionId}`);
@@ -79,7 +82,8 @@ function handleUpload(req, res) {
             client.write(chunk);
         }
     });
-    req.on("close", () => {
+
+    req.on('close', () => {
         const session = sessions.get(sessionId);
         for (const client of session.values()) {
             client.write('The host closed the session. Thank you for using TermShare!\n\r');
@@ -93,7 +97,10 @@ function handleUpload(req, res) {
 
 
 function handleStream(req, res) {
-    req.setTimeout(1000 * 3600);
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache'
+    });
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
     res.write('Welcome to TermShare!\n\r');
