@@ -9,7 +9,7 @@ const port = process.env.NOPORT ? '' : `:${process.env.PORT || 3000}`
 const rootUrl = `https://${process.env.HOST || 'localhost'}${port}`;
 const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
 const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
-
+const sharers = new Map();
 
 if (typeof String.prototype.replaceAll !== 'function') {
     function escapeRegExp(str) {
@@ -66,6 +66,7 @@ function handleUpload(req, res) {
     })
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
+    sharers.set(sessionId, req);
     console.log(`New session: ${sessionId}`);
     const url = `${rootUrl}/${sessionId}`
     const msg = 'Welcome to TermShare!\n\r' +
@@ -75,7 +76,6 @@ function handleUpload(req, res) {
         `The Session will be recorded in the file 'typescript' in the current directory.\n\r`
     res.write(msg);
     console.log('Welcome message written.');
-    req.on('')
     req.on('data', function (chunk) {
         const clients = sessions.get(sessionId);
         for (const client of clients.values()) {
@@ -83,29 +83,41 @@ function handleUpload(req, res) {
         }
     });
 
+
     req.on('close', () => {
+        console.log(`Sharer has closed session: ${sessions.size}`);
         const session = sessions.get(sessionId);
         for (const client of session.values()) {
             client.write('The host closed the session. Thank you for using TermShare!\n\r');
             client.end();
         }
         sessions.delete(sessionId);
-        console.log(`Current number of sessions: ${sessions.size}`);
+
     });
 }
 
 
 
 function handleStream(req, res) {
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache'
-    });
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
     res.write('Welcome to TermShare!\n\r');
     sseClientId++;
 }
+
+function pingAll(){
+    for (const sessionId of sessions.keys()) {
+        const session = sessions.get(sessionId);
+        for(const client of session.values()){
+            client.session.ping(Buffer.from('-'), ()=>{});
+        }
+        sharers.get(sessionId).session.ping(Buffer.from('-'), ()=>{});
+    }
+}
+
+setInterval(pingAll, 500);
+
+
 
 server.listen(process.env.PORT || 3000, () => {
     console.log(`TermShare server running on ${rootUrl}`);
