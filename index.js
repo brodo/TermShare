@@ -52,7 +52,7 @@ const server = http.createServer((req, res) => {
         res.setHeader('Content-Type', 'text/html');
         res.write(html);
     } else {
-        res.write('Welcome to ShellShare!\n\r' +
+        res.write('Welcome to TermShare!\n\r' +
             'To share your current terminal, run:\n\r' +
             `On MacOS: '${macCommand}'\n\r` +
             `On Linux: '${linuxCommand}'\n\r`);
@@ -69,7 +69,7 @@ function handleUpload(req, res) {
     sessions.set(sessionId, new Map());
     console.log(`New session: ${sessionId}`);
     const url = `${rootUrl}/${sessionId}`
-    const msg = 'Welcome to ShellShare!\n\r' +
+    const msg = 'Welcome to TermShare!\n\r' +
         `Watchers need to run 'curl ${url}'\n\r` +
         `To end the session, type 'exit' followed by CTRL+C.\n\r` +
         `The Session will be recorded in the file 'typescript' in the current directory.\n\r`
@@ -84,7 +84,7 @@ function handleUpload(req, res) {
     req.on("close", () => {
         const session = sessions.get(sessionId);
         for (const client of session.values()) {
-            client.write('The host closed the session. Thank you for using ShellShare!\n\r');
+            client.write('The host closed the session. Thank you for using TermShare!\n\r');
             client.end();
         }
         sessions.delete(sessionId);
@@ -96,10 +96,10 @@ function handleStream(req, res) {
     res.writeHead(200, sseHeader);
     const sessionId = req.url.substr(1);
     sessions.get(sessionId).set(sseClientId, res);
-    res.write('Welcome to ShellShare!\n\r');
+    res.write('Welcome to TermShare!\n\r');
     sseClientId++;
 }
 
 server.listen(process.env.PORT || 3000, () => {
-    console.log(`ShellShare server running on ${rootUrl}`);
+    console.log(`TermShare server running on ${rootUrl}`);
 });
