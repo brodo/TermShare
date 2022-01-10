@@ -9,7 +9,6 @@ const port = process.env.NOPORT ? '' : `:${process.env.PORT || 3000}`
 const rootUrl = `https://${process.env.HOST || 'localhost'}${port}`;
 const macCommand = `script -F | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`;
 const linuxCommand = `script -B /dev/stdout | tee /dev/tty | curl --no-progress-meter -T - ${rootUrl}`
-const sharers = new Map();
 
 if (typeof String.prototype.replaceAll !== 'function') {
     function escapeRegExp(str) {
@@ -62,7 +61,6 @@ function handleUpload(req, res) {
     console.log('New sharer');
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
-    sharers.set(sessionId, req);
     console.log(`New session: ${sessionId}`);
     const url = `${rootUrl}/${sessionId}`
     const msg = 'Welcome to TermShare!\n\r' +
@@ -100,20 +98,6 @@ function handleStream(req, res) {
     res.write('Welcome to TermShare!\n\r');
     sseClientId++;
 }
-
-function pingAll(){
-    for (const sessionId of sessions.keys()) {
-        const session = sessions.get(sessionId);
-        for(const client of session.values()){
-            client.session.ping(Buffer.from('-'), ()=>{});
-        }
-        sharers.get(sessionId).session.ping(Buffer.from('-'), ()=>{});
-    }
-}
-
-setInterval(pingAll, 500);
-
-
 
 server.listen(process.env.PORT || 3000, () => {
     console.log(`TermShare server running on ${rootUrl}`);
