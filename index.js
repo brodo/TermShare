@@ -60,10 +60,6 @@ const server = http2.createSecureServer({key, cert}, (req, res) => {
 
 function handleUpload(req, res) {
     console.log('New sharer');
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache'
-    })
     const sessionId = Math.random().toString(36).substr(2);
     sessions.set(sessionId, new Map());
     sharers.set(sessionId, req);
